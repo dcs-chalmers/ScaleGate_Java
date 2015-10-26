@@ -14,4 +14,5 @@ The current is provided with GPL v3.0. Please contact us if you are interested i
 
 ## Contact
 Yiannis Nikolakopoulos, ioaniko@chalmers.se
+
 Vincenzo Gulisano, vincenzo.gulisano@chalmers.se
