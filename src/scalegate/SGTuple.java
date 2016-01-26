@@ -24,27 +24,8 @@
 
 package scalegate;
 
-public class TestTupleImpl implements Comparable<Tuple>, Tuple {
+public interface SGTuple extends Comparable<SGTuple> {
 
-    long timestamp;
-
-    public TestTupleImpl(long ts) {
-	this.timestamp = ts;
-    }
-    
-    @Override
-    public long getTS() {
-	return timestamp;
-    }
-
-    @Override
-    public int compareTo(Tuple o) {
-	
-	if (this.timestamp == o.getTS()) {
-	    return 0;
-	} else {
-	    return this.timestamp > o.getTS() ? 1 : -1;
-	}
-    }
+    public long getTS();
 
 }

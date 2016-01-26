@@ -30,12 +30,12 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 public class SGNodeAArrImpl {
 
     final AtomicReferenceArray<SGNodeAArrImpl> next;
-    final Tuple obj;
+    final SGTuple obj;
     final ScaleGateAArrImpl.WriterThreadLocalData ln;
     final int writerID;
     volatile boolean assigned;
     
-    public SGNodeAArrImpl (int levels, Tuple t, ScaleGateAArrImpl.WriterThreadLocalData ln, int writerID) {
+    public SGNodeAArrImpl (int levels, SGTuple t, ScaleGateAArrImpl.WriterThreadLocalData ln, int writerID) {
 	next = new AtomicReferenceArray<SGNodeAArrImpl>(levels);
 	for (int i = 0; i < levels; i++) {
 	    	next.set(i, null);
@@ -50,7 +50,7 @@ public class SGNodeAArrImpl {
 	return next.get(level);
     }
 
-    public Tuple getTuple() {
+    public SGTuple getTuple() {
 	return this.obj;
     }
 

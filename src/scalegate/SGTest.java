@@ -118,7 +118,7 @@ public class SGTest {
 	    while (barrier.get() != 0);
 	    
 	    // Get the first tuple so that we can later check assertions for sanity checks
-	    Tuple cur, prev;
+	    SGTuple cur, prev;
 	    do {
 		prev = tgate.getNextReadyTuple(id);
 	    } while (prev == null);

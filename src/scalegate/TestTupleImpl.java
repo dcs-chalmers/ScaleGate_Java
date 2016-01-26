@@ -24,11 +24,27 @@
 
 package scalegate;
 
-public interface ScaleGate {
+public class TestTupleImpl implements Comparable<SGTuple>, SGTuple {
 
-    // Called by each processing thread to get the next ready tuple
-    public Tuple getNextReadyTuple(int readerID);
+    long timestamp;
 
-    // Just add a tuple (used for the output tuples TGate)
-    public void addTuple(Tuple tuple, int writerID);
+    public TestTupleImpl(long ts) {
+	this.timestamp = ts;
+    }
+    
+    @Override
+    public long getTS() {
+	return timestamp;
+    }
+
+    @Override
+    public int compareTo(SGTuple o) {
+	
+	if (this.timestamp == o.getTS()) {
+	    return 0;
+	} else {
+	    return this.timestamp > o.getTS() ? 1 : -1;
+	}
+    }
+
 }

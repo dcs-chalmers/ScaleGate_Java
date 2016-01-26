@@ -24,8 +24,11 @@
 
 package scalegate;
 
-public interface Tuple extends Comparable<Tuple> {
+public interface ScaleGate {
 
-    public long getTS();
+    // Called by each processing thread to get the next ready tuple
+    public SGTuple getNextReadyTuple(int readerID);
 
+    // Just add a tuple (used for the output tuples TGate)
+    public void addTuple(SGTuple tuple, int writerID);
 }

@@ -66,7 +66,7 @@ public class ScaleGateAArrImpl implements ScaleGate {
      * (non-Javadoc)
      * @see plugjoin.prototype.TGate#getNextReadyNode(int)
      */
-    public Tuple getNextReadyTuple(int readerID) {
+    public SGTuple getNextReadyTuple(int readerID) {
 	SGNodeAArrImpl next = getReaderLocal(readerID).localHead.getNext(0);
 	
 	if (next != tail && !next.isLastAdded()) {
@@ -78,11 +78,11 @@ public class ScaleGateAArrImpl implements ScaleGate {
 
     @Override
     // Add a tuple 
-    public void addTuple(Tuple tuple, int writerID) {
+    public void addTuple(SGTuple tuple, int writerID) {
 	this.internalAddTuple(tuple, writerID);
     }
 
-    private void insertNode(SGNodeAArrImpl fromNode, SGNodeAArrImpl newNode, final Tuple obj, final int level) {
+    private void insertNode(SGNodeAArrImpl fromNode, SGNodeAArrImpl newNode, final SGTuple obj, final int level) {
 	while (true) {
 	    SGNodeAArrImpl next = fromNode.getNext(level);
 	    if (next == tail || next.getTuple().compareTo(obj) > 0) {
@@ -96,7 +96,7 @@ public class ScaleGateAArrImpl implements ScaleGate {
 	}
     }
 
-    private SGNodeAArrImpl internalAddTuple(Tuple obj, int inputID) {
+    private SGNodeAArrImpl internalAddTuple(SGTuple obj, int inputID) {
 	int levels = 1;
 	WriterThreadLocalData ln = getWriterLocal(inputID);
 
