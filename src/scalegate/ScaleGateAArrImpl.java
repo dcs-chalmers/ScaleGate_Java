@@ -28,133 +28,133 @@ import java.util.Random;
 
 public class ScaleGateAArrImpl implements ScaleGate {
 
-    final int maxlevels;
-    SGNodeAArrImpl head;
-    final SGNodeAArrImpl tail;
+	final int maxlevels;
+	SGNodeAArrImpl head;
+	final SGNodeAArrImpl tail;
 
-    final int numberOfWriters;
-    final int numberOfReaders;
-    // Arrays of source/reader id local data
-    WriterThreadLocalData[] writertld;
-    ReaderThreadLocalData[] readertld;
-    
-    
-    public ScaleGateAArrImpl (int maxlevels, int writers, int readers) {
-	this.maxlevels = maxlevels;
+	final int numberOfWriters;
+	final int numberOfReaders;
+	// Arrays of source/reader id local data
+	WriterThreadLocalData[] writertld;
+	ReaderThreadLocalData[] readertld;
 
-	this.head = new SGNodeAArrImpl(maxlevels, null, null, -1);
-	this.tail = new SGNodeAArrImpl(maxlevels, null, null, -1);
 
-	for (int i = 0; i < maxlevels; i++)
-		head.setNext(i, tail);
+	public ScaleGateAArrImpl (int maxlevels, int writers, int readers) {
+		this.maxlevels = maxlevels;
 
-	this.numberOfWriters = writers;
-	this.numberOfReaders = readers;
-	
-	writertld = new WriterThreadLocalData[numberOfWriters];
-	for (int i=0; i < numberOfWriters; i++) {
-	    writertld[i] = new WriterThreadLocalData(head);
-	}
-	
-	readertld = new ReaderThreadLocalData[numberOfReaders];
-	for (int i=0; i< numberOfReaders; i++) {
-	    readertld[i] = new ReaderThreadLocalData(head);
-	}
-    }
-    @Override
-    /*
-     * (non-Javadoc)
-     * @see plugjoin.prototype.TGate#getNextReadyNode(int)
-     */
-    public SGTuple getNextReadyTuple(int readerID) {
-	SGNodeAArrImpl next = getReaderLocal(readerID).localHead.getNext(0);
-	
-	if (next != tail && !next.isLastAdded()) {
-	    getReaderLocal(readerID).localHead = next;
-	    return next.getTuple();
-	}
-	return null;
-    }
+		this.head = new SGNodeAArrImpl(maxlevels, null, null, -1);
+		this.tail = new SGNodeAArrImpl(maxlevels, null, null, -1);
 
-    @Override
-    // Add a tuple 
-    public void addTuple(SGTuple tuple, int writerID) {
-	this.internalAddTuple(tuple, writerID);
-    }
+		for (int i = 0; i < maxlevels; i++)
+			head.setNext(i, tail);
 
-    private void insertNode(SGNodeAArrImpl fromNode, SGNodeAArrImpl newNode, final SGTuple obj, final int level) {
-	while (true) {
-	    SGNodeAArrImpl next = fromNode.getNext(level);
-	    if (next == tail || next.getTuple().compareTo(obj) > 0) {
-		newNode.setNext(level, next);
-		if (fromNode.trySetNext(level, next, newNode)) {
-		    break;
+		this.numberOfWriters = writers;
+		this.numberOfReaders = readers;
+
+		writertld = new WriterThreadLocalData[numberOfWriters];
+		for (int i=0; i < numberOfWriters; i++) {
+			writertld[i] = new WriterThreadLocalData(head);
 		}
-	    } else {
-		fromNode = next;
-	    }
+
+		readertld = new ReaderThreadLocalData[numberOfReaders];
+		for (int i=0; i< numberOfReaders; i++) {
+			readertld[i] = new ReaderThreadLocalData(head);
+		}
 	}
-    }
+	@Override
+	/*
+	 * (non-Javadoc)
+	 * @see plugjoin.prototype.TGate#getNextReadyNode(int)
+	 */
+	public SGTuple getNextReadyTuple(int readerID) {
+		SGNodeAArrImpl next = getReaderLocal(readerID).localHead.getNext(0);
 
-    private SGNodeAArrImpl internalAddTuple(SGTuple obj, int inputID) {
-	int levels = 1;
-	WriterThreadLocalData ln = getWriterLocal(inputID);
-
-	while (ln.rand.nextBoolean() && levels < maxlevels)
-	    levels++;
-
-	
-	SGNodeAArrImpl newNode = new SGNodeAArrImpl (levels, obj, ln, inputID);
-	SGNodeAArrImpl [] update = ln.update;
-	SGNodeAArrImpl curNode = update[maxlevels - 1];
-
-	for (int i = maxlevels - 1; i >= 0; i--) {
-	    SGNodeAArrImpl tx = curNode.getNext(i);
-
-	    while (tx != tail && tx.getTuple().compareTo(obj) < 0) {
-		curNode = tx;
-		tx = curNode.getNext(i);
-	    }
-
-	    update[i] = curNode;
+		if (next != tail && !next.isLastAdded()) {
+			getReaderLocal(readerID).localHead = next;
+			return next.getTuple();
+		}
+		return null;
 	}
 
-	for (int i = 0; i < levels; i++) {
-	    this.insertNode(update[i], newNode, obj, i);
+	@Override
+	// Add a tuple 
+	public void addTuple(SGTuple tuple, int writerID) {
+		this.internalAddTuple(tuple, writerID);
 	}
-	
-	ln.written = newNode;
-	return newNode;
-    }
-    
-    private WriterThreadLocalData getWriterLocal(int writerID) {
-	return writertld[writerID];
-    }
 
-    private ReaderThreadLocalData getReaderLocal(int readerID) {
-	return readertld[readerID];
-    }
-    protected class WriterThreadLocalData {
-	// reference to the last written node by the respective writer
-	volatile SGNodeAArrImpl written; 
-	SGNodeAArrImpl [] update;
-	final Random rand;
+	private void insertNode(SGNodeAArrImpl fromNode, SGNodeAArrImpl newNode, final SGTuple obj, final int level) {
+		while (true) {
+			SGNodeAArrImpl next = fromNode.getNext(level);
+			if (next == tail || next.getTuple().compareTo(obj) > 0) {
+				newNode.setNext(level, next);
+				if (fromNode.trySetNext(level, next, newNode)) {
+					break;
+				}
+			} else {
+				fromNode = next;
+			}
+		}
+	}
 
-	public WriterThreadLocalData(SGNodeAArrImpl localHead) {
-	    update = new SGNodeAArrImpl[maxlevels];
-	    written = localHead;
-	    for (int i=0; i < maxlevels; i++) {
-		update[i]= localHead;
-	    }	    
-	    rand = new Random();
+	private SGNodeAArrImpl internalAddTuple(SGTuple obj, int inputID) {
+		int levels = 1;
+		WriterThreadLocalData ln = getWriterLocal(inputID);
+
+		while (ln.rand.nextBoolean() && levels < maxlevels)
+			levels++;
+
+
+		SGNodeAArrImpl newNode = new SGNodeAArrImpl (levels, obj, ln, inputID);
+		SGNodeAArrImpl [] update = ln.update;
+		SGNodeAArrImpl curNode = update[maxlevels - 1];
+
+		for (int i = maxlevels - 1; i >= 0; i--) {
+			SGNodeAArrImpl tx = curNode.getNext(i);
+
+			while (tx != tail && tx.getTuple().compareTo(obj) < 0) {
+				curNode = tx;
+				tx = curNode.getNext(i);
+			}
+
+			update[i] = curNode;
+		}
+
+		for (int i = 0; i < levels; i++) {
+			this.insertNode(update[i], newNode, obj, i);
+		}
+
+		ln.written = newNode;
+		return newNode;
 	}
-    }
-    
-    protected class ReaderThreadLocalData {
-	SGNodeAArrImpl localHead;
-	
-	public ReaderThreadLocalData(SGNodeAArrImpl lhead) {
-	    localHead = lhead;
+
+	private WriterThreadLocalData getWriterLocal(int writerID) {
+		return writertld[writerID];
 	}
-    }
+
+	private ReaderThreadLocalData getReaderLocal(int readerID) {
+		return readertld[readerID];
+	}
+	protected class WriterThreadLocalData {
+		// reference to the last written node by the respective writer
+		volatile SGNodeAArrImpl written; 
+		SGNodeAArrImpl [] update;
+		final Random rand;
+
+		public WriterThreadLocalData(SGNodeAArrImpl localHead) {
+			update = new SGNodeAArrImpl[maxlevels];
+			written = localHead;
+			for (int i=0; i < maxlevels; i++) {
+				update[i]= localHead;
+			}	    
+			rand = new Random();
+		}
+	}
+
+	protected class ReaderThreadLocalData {
+		SGNodeAArrImpl localHead;
+
+		public ReaderThreadLocalData(SGNodeAArrImpl lhead) {
+			localHead = lhead;
+		}
+	}
 }
