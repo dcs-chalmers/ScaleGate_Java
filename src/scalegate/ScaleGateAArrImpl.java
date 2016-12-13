@@ -60,11 +60,14 @@ public class ScaleGateAArrImpl implements ScaleGate {
 		for (int i=0; i< numberOfReaders; i++) {
 			readertld[i] = new ReaderThreadLocalData(head);
 		}
+		
+		//This should not be used again, only the writer/reader-local variables
+		head = null;
 	}
+
 	@Override
 	/*
 	 * (non-Javadoc)
-	 * @see plugjoin.prototype.TGate#getNextReadyNode(int)
 	 */
 	public SGTuple getNextReadyTuple(int readerID) {
 		SGNodeAArrImpl next = getReaderLocal(readerID).localHead.getNext(0);
